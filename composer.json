@@ -1,6 +1,6 @@
 {
   "name": "joby/bbmark",
-  "description": "A hybrid markup language that combines the best of Markdown and bbCode for web content authoring.",
+  "description": "A hybrid markup language that combines the best of Markdown and bbCode-style tags, designed for intuitive web content authoring.",
   "type": "library",
   "license": "MIT",
   "autoload": {
