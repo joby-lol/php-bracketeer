@@ -47,26 +47,30 @@ class TextParser implements ConfigurationAwareInterface
 
     public function parse(string $text): string
     {
-        return preg_replace_callback(
-            '@(' . Bracketeer::REGEX_BRACKETEER_TAG . '|' . Bracketeer::REGEX_WIKILINK_TAG . ')@',
+        $text = preg_replace_callback(
+            '@' . Bracketeer::REGEX_WIKILINK_TAG . '@',
             function ($matches): string {
-                $parts = explode('|', mb_substr($matches[1], 2, -2));
-                if (str_starts_with($matches[0], '{')) return $this->bracketeerTag($parts);
-                elseif (str_starts_with($matches[0], '[')) return $this->wikiLinkTag($parts);
-                else return ErrorBuilder::inline('tag parsing error');
+                return $this->wikiLinkTag(explode('|', $matches[1]));
+            },
+            $text
+        );
+        return preg_replace_callback(
+            '@' . Bracketeer::REGEX_BRACKETEER_TAG . '@',
+            function ($matches): string {
+                return $this->bracketeerTag($matches[1], explode('|', $matches[2]));
             },
             $text
         );
     }
 
-    protected function bracketeerTag(array $parts): string
+    protected function bracketeerTag(string $tag, array $parts): string
     {
-        $handler = $this->config->get('bracketeer')['inline_tags'][$parts[0]] ?? null;
+        $handler = $this->config->get('bracketeer')['inline_tags'][$tag] ?? null;
         if (!$handler) {
             return ErrorBuilder::inline('tag handler not found');
         }
         assert($handler instanceof TagHandler);
-        return $handler->render(...$parts);
+        return $handler->render($tag, ...$parts);
     }
 
     protected function wikiLinkTag(array $parts): string

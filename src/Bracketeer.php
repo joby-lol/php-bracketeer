@@ -26,7 +26,7 @@
 namespace Joby\Bracketeer;
 
 use Joby\Bracketeer\Tags\LinkTagHandler;
-use Joby\Bracketeer\Tags\MediaTagHandler;
+use Joby\Bracketeer\Tags\EmbedTagHandler;
 use Joby\Bracketeer\Text\TextParser;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\Attributes\AttributesExtension;
@@ -45,7 +45,7 @@ use Stringable;
 
 class Bracketeer
 {
-    const string REGEX_BRACKETEER_TAG = '\{\{(.+?\^?(\|.*?)*)\}\}';
+    const string REGEX_BRACKETEER_TAG = '\[([a-z]+)\[(.+?\^?(\|.*?)*)\]\]';
     const string REGEX_WIKILINK_TAG = '\[\[(.+?\^?(\|.*?)*)\]\]';
     const array DEFAULT_CONFIG = [
         'bracketeer' => [
@@ -84,9 +84,9 @@ class Bracketeer
         );
         $this->config['bracketeer']['text_parser'] ??= new TextParser();
         $this->config['bracketeer']['link_resolver'] ??= new LinkResolver();
-        $this->config['bracketeer']['media_resolver'] ??= new MediaResolver();
+        $this->config['bracketeer']['media_resolver'] ??= new EmbedResolver();
         $this->config['bracketeer']['inline_tags']['link'] ??= new LinkTagHandler();
-        $this->config['bracketeer']['block_tags']['media'] ??= new MediaTagHandler();
+        $this->config['bracketeer']['block_tags']['media'] ??= new EmbedTagHandler();
     }
 
     public function parse(string|Stringable $content): RenderedContentInterface

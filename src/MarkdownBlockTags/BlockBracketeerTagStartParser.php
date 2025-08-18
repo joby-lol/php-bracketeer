@@ -33,12 +33,10 @@ class BlockBracketeerTagStartParser implements BlockStartParserInterface, Config
         if ($match === null) {
             return BlockStart::none();
         }
-        // separate out the parts
-        $parts = explode('|', mb_substr($match[0], 2, -2));
         // advance to the end of the string, consuming the entire line
         $cursor->advanceToEnd();
         return BlockStart::of(
-            new BlockBracketeerTagParser($parts)
+            new BlockBracketeerTagParser($match[1], explode('|', $match[2]))
         )->at($cursor);
     }
 }

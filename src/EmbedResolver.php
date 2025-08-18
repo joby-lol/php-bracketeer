@@ -7,14 +7,14 @@ use League\Config\ConfigurationInterface;
 use Stringable;
 
 /**
- * This class is used to resolve media elements in tags, and to provide a consistent single point for rendering them
- * into HTML. This is also where you add your own custom link resolvers if you wish, for example to hook into your own
- * CMS's page IDs or slugs so they can be used as links.
+ * This class is used to resolve embeddable elements in tags, and to provide a consistent single point for rendering
+ * them into HTML. This is also where you add your own custom embed resolvers if you wish, for example to hook into your
+ * own CMS's page IDs or slugs so they can be used as links.
  */
-class MediaResolver
+class EmbedResolver
 {
     /**
-     * Default templates for rendering media elements. They may include placeholders for the URL and title, and can
+     * Default templates for rendering embeddable elements. They may include placeholders for the URL and title, and can
      * be overridden by adding your own templates to the TEMPLATES constant in a subclass. If you want to add your own
      * templates in a more flexible way, you can override the buildHtml() method in this class to handle converting
      * ResolvedMedia objects to HTML using any logic you want.
@@ -22,10 +22,10 @@ class MediaResolver
      * @var array<string, string>
      */
     const array TEMPLATES = [
-        'image' => '<div class="bracketeer-media bracketeer-media--image"><img src="{url}" alt="{title}" /></div>',
-        'video' => '<div class="bracketeer-media bracketeer-media--video"><video src="{url}" controls></video></div>',
-        'audio' => '<div class="bracketeer-media bracketeer-media--audio"><audio src="{url}" controls></audio></div>',
-        'link' => '<div class="bracketeer-media bracketeer-media--link"><a href="{url}">{title}</a></div>',
+        'image' => '<figure class="bracketeer-embed bracketeer-embed--image"><img src="{url}" alt="{title}" />{caption}</figure>',
+        'video' => '<figure class="bracketeer-embed bracketeer-embed--video"><video src="{url}" controls></video>{caption}</figure>',
+        'audio' => '<figure class="bracketeer-embed bracketeer-embed--audio"><audio src="{url}" controls></audio>{caption}</figure>',
+        'link' => '<figure class="bracketeer-embed bracketeer-embed--link"><a href="{url}">{title}</a>{caption}</figure>',
     ];
     protected ConfigurationInterface $config;
     protected array $resolvers = [];
@@ -44,7 +44,7 @@ class MediaResolver
         return $this;
     }
 
-    public function resolve(string $url): ResolvedMedia|null
+    public function resolve(string $url): ResolvedEmbed|null
     {
         foreach ($this->resolvers as $resolver) {
             $resolved = $resolver($url);
@@ -58,13 +58,21 @@ class MediaResolver
         $this->config = $configuration;
     }
 
-    public function buildHtml(ResolvedMedia $media): string|Stringable|null
+    public function buildHtml(ResolvedEmbed $media): string|Stringable|null
     {
         $template = self::TEMPLATES[$media->type] ?? null;
         if (!$template) return null;
         return str_replace(
-            ['{url}', '{title}'],
-            [$media->url, $media->title],
+            [
+                '{url}',
+                '{title}',
+                '{caption}',
+            ],
+            [
+                $media->url,
+                $media->title,
+                $media->caption ? sprintf('<figcaption>%s</figcaption>', $media->caption) : '',
+            ],
             $template
         );
     }
@@ -84,7 +92,7 @@ class MediaResolver
             ?? ErrorBuilder::block('Media could not be rendered');
     }
 
-    protected function defaultResolve(string $url): ResolvedMedia|null
+    protected function defaultResolve(string $url): ResolvedEmbed|null
     {
         $title = basename($url) ?: $url;
         $type = 'link';
@@ -92,6 +100,6 @@ class MediaResolver
         if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'])) $type = 'image';
         elseif (in_array($extension, ['mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv'])) $type = 'video';
         elseif (in_array($extension, ['mp3', 'wav', 'ogg', 'flac', 'aac'])) $type = 'audio';
-        return new ResolvedMedia($url, $title, $type);
+        return new ResolvedEmbed($url, $title, $type);
     }
 }

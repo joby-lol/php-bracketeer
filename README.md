@@ -52,13 +52,13 @@ same, with the display text set to "Display text".
 ## Bracketeer tags
 
 Bracketeer tags are also available, and can be easily added to the parser to cover your individual use cases. Their
-syntax is similar to wiki-style links, but they are wrapped in curly braces and have a mandatory first value to indicate
-their tag name. For example, the built-in "link" Bracketeer tag might look something like
-`{{link|link_slug|Alternative display text}}`. There is also a built-in block-level "embed" bracketeer tag that can be
-easily plugged into your own embeddable content locating system.
+syntax is similar to wiki-style links, but they have a string between the first two brackets to indicate their tag name.
+For example, the built-in "link" Bracketeer tag might look something like `[link[url_goes_here|Link display text]]`.
+There is also a built-in block-level "embed" bracketeer tag that can be easily plugged into your own embeddable content
+locating system.
 
-There are also built-in block-level Bracketeer tags planned for embedding media from various online sources, such as
-YouTube and Vimeo.
+There are also built-in block-level Bracketeer embed handlers planned for embedding media from various online sources,
+such as YouTube and Vimeo.
 
 ## Advanced Markdown
 

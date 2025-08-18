@@ -13,9 +13,9 @@ class BlockBracketeerTagParser extends AbstractBlockContinueParser
 {
     protected BlockTag $block;
 
-    public function __construct(array $parts)
+    public function __construct(string $tag, array $parts)
     {
-        $this->block = new BlockTag($parts);
+        $this->block = new BlockTag($tag, $parts);
     }
 
     public function getBlock(): AbstractBlock

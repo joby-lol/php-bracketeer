@@ -3,9 +3,9 @@
 namespace Joby\Bracketeer;
 
 /**
- * Class to represent a media file that has been resolved by a system resolver.
+ * Class to represent an embeddable element that has been resolved by a system resolver.
  */
-class ResolvedMedia
+class ResolvedEmbed
 {
     /**
      * @var string|null The resolved URL of where this media can be viewed or downloaded independently.
@@ -17,8 +17,13 @@ class ResolvedMedia
      */
     public readonly string|null $title;
     /**
+     * @var string|null The caption of the embed, if available. This is included in the figcaption element of the
+     *                  default templates, if provided.
+     */
+    public readonly string|null $caption;
+    /**
      * @var string A string representing the "type" of the media, such as "image", "video", "audio", etc. This class
-     *      includes templates for a few types, and if you want to add your own that is relatively easy by either
+     *      includes templates for a few types, and if you want to add your own, that is relatively easy by either
      *      overriding the TEMPLATES constant or the entire buildHtml() method in the MediaResolver class.
      */
     public readonly string $type;

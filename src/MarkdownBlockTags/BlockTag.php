@@ -8,6 +8,7 @@ use League\CommonMark\Node\Block\AbstractBlock;
 class BlockTag extends AbstractBlock
 {
     public function __construct(
+        public readonly string $tag,
         public readonly array $parts,
     )
     {
