@@ -1,7 +1,7 @@
 <?php
 
 /**
- * bbMark: https://go.joby.lol/php-bbmark
+ * Bracketeer: https://go.joby.lol/php-bracketeer
  * MIT License: Copyright (c) 2024 Joby Elliott
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,10 +23,10 @@
  * SOFTWARE.
  */
 
-namespace Joby\bbMark\Renderers;
+namespace Joby\Bracketeer\MarkdownLinks;
 
-use Joby\bbMark\ErrorBuilder;
-use Joby\bbMark\Nodes\Link;
+use Joby\Bracketeer\ErrorBuilder;
+use Joby\Bracketeer\LinkResolver;
 use League\CommonMark\Node\Node;
 use League\CommonMark\Renderer\ChildNodeRendererInterface;
 use League\CommonMark\Renderer\NodeRendererInterface;
@@ -35,7 +35,7 @@ use League\CommonMark\Util\RegexHelper;
 use League\Config\ConfigurationAwareInterface;
 use League\Config\ConfigurationInterface;
 
-class LinkRenderer implements NodeRendererInterface, ConfigurationAwareInterface
+class BracketeerLinkRenderer implements NodeRendererInterface, ConfigurationAwareInterface
 {
     private ConfigurationInterface $config;
 
@@ -45,33 +45,18 @@ class LinkRenderer implements NodeRendererInterface, ConfigurationAwareInterface
     }
 
     /**
-     * @param Link $node
+     * @param BracketeerLink $node
      */
     public function render(Node $node, ChildNodeRendererInterface $childRenderer)
     {
-        Link::assertInstanceOf($node);
-        // set up attributes
-        $attrs = [];
-        $attrs['href'] = $node->getUrl();
-        // title
-        if ($node->title) {
-            $attrs['title'] = sprintf('%s [%s]', $node->title, $node->getUrl());
-        } else {
-            $attrs['title'] = sprintf('[%s]', $node->getUrl());
-        }
-        // new windows
-        if ($node->new_window) {
-            $attrs['target'] = '_blank';
-        }
-        // forbid unsafe links
-        if (!$this->config->get('allow_unsafe_links') || RegexHelper::isLinkPotentiallyUnsafe($attrs['href'])) {
-            return ErrorBuilder::inline('potentially unsafe link');
-        }
-        // render to HTML element
-        if ($node->hasChildren()) {
-            return new HtmlElement('a', $attrs, $childRenderer->renderNodes($node->children()));
-        } else {
-            return new HtmlElement('a', $attrs, $node->title ?: $node->getUrl());
-        }
+        BracketeerLink::assertInstanceOf($node);
+        $resolver = $this->config->get('bracketeer')['link_resolver'];
+        assert($resolver instanceof LinkResolver);
+        return $resolver->render(
+            $node->getUrl(),
+            $node->title,
+            $node->hasChildren() ? $childRenderer->renderNodes($node->children()) : null,
+            $node->new_window,
+        );
     }
 }

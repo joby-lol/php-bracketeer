@@ -1,7 +1,7 @@
 <?php
 
 /**
- * bbMark: https://go.joby.lol/php-bbmark
+ * Bracketeer: https://go.joby.lol/php-bracketeer
  * MIT License: Copyright (c) 2024 Joby Elliott
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,8 +23,18 @@
  * SOFTWARE.
  */
 
-namespace Joby\bbMark\TagBuilders;
+namespace Joby\Bracketeer\MarkdownLinks;
 
-interface TagBuilderInterface
+use League\CommonMark\Extension\CommonMark\Node\Inline\AbstractWebResource;
+
+class BracketeerLink extends AbstractWebResource
 {
+    public function __construct(
+        string                      $url,
+        public readonly string|null $title,
+        public readonly bool        $new_window,
+    )
+    {
+        parent::__construct($url);
+    }
 }

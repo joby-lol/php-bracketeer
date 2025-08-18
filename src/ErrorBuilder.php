@@ -1,7 +1,7 @@
 <?php
 
 /**
- * bbMark: https://go.joby.lol/php-bbmark
+ * Bracketeer: https://go.joby.lol/php-bracketeer
  * MIT License: Copyright (c) 2024 Joby Elliott
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,7 +23,7 @@
  * SOFTWARE.
  */
 
-namespace Joby\bbMark;
+namespace Joby\Bracketeer;
 
 use League\CommonMark\Util\HtmlElement;
 
@@ -34,7 +34,7 @@ class ErrorBuilder
         return new HtmlElement(
             'mark',
             [
-                'class' => 'bbmark-error',
+                'class' => 'bracketeer-error',
                 'role' => 'alert',
                 'title' => $message
             ],
@@ -47,7 +47,7 @@ class ErrorBuilder
         $mark = new HtmlElement(
             'mark',
             [
-                'class' => 'bbmark-error'
+                'class' => 'bracketeer-error'
             ],
             sprintf('⚠️ %s', $message)
         );
@@ -55,8 +55,7 @@ class ErrorBuilder
         return new HtmlElement(
             'section',
             [
-                'class' => 'bbmark-error',
-                'role' => 'alert'
+                'class' => 'bracketeer-error'
             ],
             $mark
         );

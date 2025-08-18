@@ -1,16 +1,16 @@
 {
-  "name": "joby/bbmark",
-  "description": "A hybrid markup language that combines the best of Markdown and bbCode-style tags, designed for intuitive web content authoring.",
+  "name": "joby/bracketeer",
+  "description": "A hybrid markup language that combines Markdown, wiki-style link tags, and its own easily extensible tag syntax for intuitive plaintext web authoring.",
   "type": "library",
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Joby\\bbMark\\": "src/"
+      "Joby\\Bracketeer\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Joby\\bbMark\\": "tests/"
+      "Joby\\Bracketeer\\": "tests/"
     }
   },
   "authors": [

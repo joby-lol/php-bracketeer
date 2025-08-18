@@ -1,7 +1,7 @@
 <?php
 
 /**
- * bbMark: https://go.joby.lol/php-bbmark
+ * Bracketeer: https://go.joby.lol/php-bracketeer
  * MIT License: Copyright (c) 2024 Joby Elliott
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,7 +23,7 @@
  * SOFTWARE.
  */
 
-namespace Joby\bbMark;
+namespace Joby\Bracketeer;
 
 use League\CommonMark\Environment\EnvironmentBuilderInterface;
 use League\CommonMark\Extension\CommonMark\Node;
@@ -32,7 +32,7 @@ use League\CommonMark\Extension\CommonMark\Renderer;
 use League\CommonMark\Extension\ExtensionInterface;
 
 /**
- * An extension to allow including HTML in your markdown.
+ * An extension to allow including HTML in your Markdown.
  */
 class HtmlExtension implements ExtensionInterface
 {

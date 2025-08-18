@@ -1,12 +1,12 @@
 <?php
 
-namespace Joby\bbMark;
+namespace Joby\Bracketeer;
 
 use PHPUnit\Framework\TestCase;
 
-class bbMarkParserTest extends TestCase
+class WikiStyleLinksTest extends TestCase
 {
-    protected bbMarkParser $parser;
+    protected Bracketeer $parser;
 
     public function testBasicWikiLinks()
     {
@@ -33,7 +33,7 @@ class bbMarkParserTest extends TestCase
 
         // Title with special characters
         $this->assertStringContainsString(
-            '<a href="page" title="Title &amp; Stuff [page]">Title & Stuff</a>',
+            '<a href="page" title="Title &amp; Stuff [page]">Title &amp; Stuff</a>',
             $this->parser->parse('[[page|Title & Stuff]]')
         );
     }
@@ -46,7 +46,7 @@ class bbMarkParserTest extends TestCase
             $this->parser->parse('[[contact^]]')
         );
 
-        // New window with title
+        // New window with a specified title
         $this->assertStringContainsString(
             '<a href="page" title="Click Me [page]" target="_blank">Click Me</a>',
             $this->parser->parse('[[page^|Click Me]]')
@@ -61,7 +61,7 @@ class bbMarkParserTest extends TestCase
             $this->parser->parse('[[https://example.com]]')
         );
 
-        // External with title and new window
+        // External with a title and new window
         $this->assertStringContainsString(
             '<a href="https://example.com" title="Example Site [https://example.com]" target="_blank">Example Site</a>',
             $this->parser->parse('[[https://example.com^|Example Site]]')
@@ -87,13 +87,13 @@ class bbMarkParserTest extends TestCase
     {
         // Test unsafe links are allowed when configured
         // note that in this test class unsafe links are allowed for testing by default
-        $this->assertStringNotContainsString(
+        $this->assertStringContainsString(
             '<a href="javascript:alert(1)"',
             $this->parser->parse('[[javascript:alert(1)]]')
         );
         // Test unsafe links are not allowed when configured
         // we need to turn it off because by default in this test unsafe links are allowed for testing
-        $unsafeParser = new bbMarkParser(['allow_unsafe_links' => false]);
+        $unsafeParser = new Bracketeer(['allow_unsafe_links' => false]);
         $this->assertStringContainsString(
             'potentially unsafe link',
             $unsafeParser->parse('[[javascript:alert(1)]]')
@@ -127,17 +127,16 @@ class bbMarkParserTest extends TestCase
             $this->parser->parse('*[[test]] foo*')
         );
 
-        // TODO: fix this by moving bbcode and wiki link parsing out of commonmark into something that runs inside the commonmark text renderer
-        // until that's done this test can't pass
-        // $this->assertStringContainsString(
-        //     '<em><a href="test" title="[test]">test</a></em>',
-        //     $this->parser->parse('*[[test]]*')
-        // );
+        // Works inside emphasis, even though emphasis is now parsed differently
+        $this->assertStringContainsString(
+            '<em><a href="test" title="[test]">test</a></em>',
+            $this->parser->parse('*[[test]]*')
+        );
     }
 
     protected function setUp(): void
     {
-        $this->parser = new bbMarkParser([
+        $this->parser = new Bracketeer([
             'allow_unsafe_links' => true
         ]);
     }

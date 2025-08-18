@@ -1,7 +1,7 @@
 <?php
 
 /**
- * bbMark: https://go.joby.lol/php-bbmark
+ * Bracketeer: https://go.joby.lol/php-bracketeer
  * MIT License: Copyright (c) 2024 Joby Elliott
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,8 +23,11 @@
  * SOFTWARE.
  */
 
-namespace Joby\bbMark;
+namespace Joby\Bracketeer;
 
+use Joby\Bracketeer\Tags\TagHandler;
+use Joby\Bracketeer\Text\BracketeerTextRenderer;
+use Joby\Bracketeer\Text\TextParser;
 use League\CommonMark\Environment\EnvironmentBuilderInterface;
 use League\CommonMark\Extension\CommonMark\Delimiter\Processor\EmphasisDelimiterProcessor;
 use League\CommonMark\Extension\CommonMark\Node;
@@ -41,7 +44,7 @@ use Nette\Schema\Expect;
  * An extension to configure a bare-minimum Markdown rendering setup with no
  * configurability. This will enable basic text formatting only.
  */
-class MarkdownExtension implements ConfigurableExtensionInterface
+class BracketeerExtension implements ConfigurableExtensionInterface
 {
     public function configureSchema(ConfigurationBuilderInterface $builder): void
     {
@@ -52,11 +55,25 @@ class MarkdownExtension implements ConfigurableExtensionInterface
             'enable_em' => Expect::bool(true),
             'unordered_list_markers' => Expect::listOf('string')->min(1)->default(['*'])->mergeDefaults(false)
         ]));
+        $builder->addSchema('bracketeer', Expect::structure([
+            'block_tags' => Expect::arrayOf(
+                Expect::type(TagHandler::class),
+                Expect::string()->pattern('[a-z][a-z0-9]*')
+            ),
+            'inline_tags' => Expect::arrayOf(
+                Expect::type(TagHandler::class),
+                Expect::string()->pattern('[a-z][a-z0-9]*')
+            ),
+            'link_resolver' => Expect::type(LinkResolver::class),
+            'media_resolver' => Expect::type(MediaResolver::class),
+            'text_parser' => Expect::type(TextParser::class),
+        ]));
     }
 
     public function register(EnvironmentBuilderInterface $environment): void
     {
         $environment
+            // this is mostly basically the same as the core commonmark extension
             ->addBlockStartParser(new Parser\Block\BlockQuoteStartParser(), 70)
             ->addBlockStartParser(new Parser\Block\HeadingStartParser(), 60)
             ->addBlockStartParser(new Parser\Block\FencedCodeStartParser(), 50)
@@ -80,8 +97,9 @@ class MarkdownExtension implements ConfigurableExtensionInterface
             ->addRenderer(Node\Inline\Emphasis::class, new Renderer\Inline\EmphasisRenderer())
             ->addRenderer(CoreNode\Inline\Newline::class, new CoreRenderer\Inline\NewlineRenderer())
             ->addRenderer(Node\Inline\Strong::class, new Renderer\Inline\StrongRenderer())
-            // TODO: explore removing textrenderer here and replacing it with a custom one that does bbcode and wiki tags
-            ->addRenderer(CoreNode\Inline\Text::class, new CoreRenderer\Inline\TextRenderer());
+            // Note that this is not the core text renderer, because we use our own to process bbcode and wiki link tags
+            ->addRenderer(CoreNode\Inline\Text::class, new BracketeerTextRenderer($environment));
+        // emphasis processing now happens differently because of that security thing where tons of asterisks blows up CPU use
         if ($environment->getConfiguration()->get('commonmark/use_asterisk')) {
             $environment->addDelimiterProcessor(new EmphasisDelimiterProcessor('*'));
         }

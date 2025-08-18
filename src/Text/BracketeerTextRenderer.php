@@ -1,7 +1,7 @@
 <?php
 
 /**
- * bbMark: https://go.joby.lol/php-bbmark
+ * Bracketeer: https://go.joby.lol/php-bracketeer
  * MIT License: Copyright (c) 2024 Joby Elliott
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,17 +23,49 @@
  * SOFTWARE.
  */
 
-namespace Joby\bbMark\Tags;
+namespace Joby\Bracketeer\Text;
 
+use League\CommonMark\Node\Inline\Text;
 use League\CommonMark\Node\Node;
 use League\CommonMark\Renderer\ChildNodeRendererInterface;
 use League\CommonMark\Renderer\NodeRendererInterface;
+use League\CommonMark\Xml\XmlNodeRendererInterface;
+use League\Config\ConfigurationAwareInterface;
+use League\Config\ConfigurationInterface;
+use Stringable;
 
-class TagRenderer implements NodeRendererInterface
+/**
+ * Commonmark text renderer that does additional parsing to process wiki links and bbcode.
+ */
+class BracketeerTextRenderer implements NodeRendererInterface, XmlNodeRendererInterface, ConfigurationAwareInterface
 {
-    public function render(Node $node, ChildNodeRendererInterface $childRenderer)
+    protected ConfigurationInterface $config;
+
+    public function setConfiguration(ConfigurationInterface $configuration): void
     {
-        TagNode::assertInstanceOf($node);
-        return null;
+        $this->config = $configuration;
+    }
+
+    /**
+     * @param Node $node
+     *
+     * @return null|string|Stringable
+     */
+    public function render(Node $node, ChildNodeRendererInterface $childRenderer): string
+    {
+        Text::assertInstanceOf($node);
+        $text = $node->getLiteral();
+        $text = htmlentities($text, double_encode: false);
+        return $this->config->get('bracketeer')['text_parser']->parse($text);
+    }
+
+    public function getXmlTagName(Node $node): string
+    {
+        return 'text';
+    }
+
+    public function getXmlAttributes(Node $node): array
+    {
+        return [];
     }
 }

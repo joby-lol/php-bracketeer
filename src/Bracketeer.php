@@ -1,7 +1,7 @@
 <?php
 
 /**
- * bbMark: https://go.joby.lol/php-bbmark
+ * Bracketeer: https://go.joby.lol/php-bracketeer
  * MIT License: Copyright (c) 2024 Joby Elliott
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,9 +23,11 @@
  * SOFTWARE.
  */
 
-namespace Joby\bbMark;
+namespace Joby\Bracketeer;
 
-use Joby\bbMark\TagBuilders\LinkTagBuilder;
+use Joby\Bracketeer\Tags\LinkTagHandler;
+use Joby\Bracketeer\Tags\MediaTagHandler;
+use Joby\Bracketeer\Text\TextParser;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\Attributes\AttributesExtension;
 use League\CommonMark\Extension\DescriptionList\DescriptionListExtension;
@@ -38,16 +40,19 @@ use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\Extension\TableOfContents\TableOfContentsExtension;
 use League\CommonMark\MarkdownConverter;
 use League\CommonMark\Output\RenderedContentInterface;
+use League\Config\ConfigurationAwareInterface;
 use Stringable;
 
-class bbMarkParser
+class Bracketeer
 {
+    const string REGEX_BRACKETEER_TAG = '\{\{(.+?\^?(\|.*?)*)\}\}';
+    const string REGEX_WIKILINK_TAG = '\[\[(.+?\^?(\|.*?)*)\]\]';
     const array DEFAULT_CONFIG = [
-        // TODO: how tags get configured might need to be totally different? we'll see I guess
-        'bbmark' => [
-            'tags' => [
-                'link' => LinkTagBuilder::class,
-            ]
+        'bracketeer' => [
+            'inline_tags' => [],
+            'block_tags' => [],
+            'link_resolver' => null,
+            'media_resolver' => null,
         ],
         'renderer' => [
             'block_separator' => PHP_EOL,
@@ -77,6 +82,11 @@ class bbMarkParser
             static::DEFAULT_CONFIG,
             $this->config
         );
+        $this->config['bracketeer']['text_parser'] ??= new TextParser();
+        $this->config['bracketeer']['link_resolver'] ??= new LinkResolver();
+        $this->config['bracketeer']['media_resolver'] ??= new MediaResolver();
+        $this->config['bracketeer']['inline_tags']['link'] ??= new LinkTagHandler();
+        $this->config['bracketeer']['block_tags']['media'] ??= new MediaTagHandler();
     }
 
     public function parse(string|Stringable $content): RenderedContentInterface
@@ -88,11 +98,20 @@ class bbMarkParser
     {
         if (is_null($this->commonmark)) {
             $environment = new Environment($this->config);
-            // TODO: there will probably only be one custom extension, since all the additional features will happen just in the updated text renderer
-            // add our custom extension
-            $environment->addExtension(new bbMarkExtension);
-            // add basic markdown/html extensions
-            $environment->addExtension(new MarkdownExtension);
+            // manually set config where necessary
+            $this->config['bracketeer']['text_parser']->setConfiguration($environment->getConfiguration());
+            $this->config['bracketeer']['link_resolver']->setConfiguration($environment->getConfiguration());
+            $this->config['bracketeer']['media_resolver']->setConfiguration($environment->getConfiguration());
+            // set config on inline and block tags if necessary
+            foreach ($this->config['bracketeer']['inline_tags'] as $handler) {
+                if ($handler instanceof ConfigurationAwareInterface) $handler->setConfiguration($environment->getConfiguration());
+            }
+            foreach ($this->config['bracketeer']['block_tags'] as $handler) {
+                if ($handler instanceof ConfigurationAwareInterface) $handler->setConfiguration($environment->getConfiguration());
+            }
+            // add our custom Markdown extension that uses its own text renderer but is otherwise mostly stock
+            $environment->addExtension(new BracketeerExtension());
+            // add basic shared extensions
             $environment->addExtension(new FootnoteExtension);
             $environment->addExtension(new HeadingPermalinkExtension);
             $environment->addExtension(new TableOfContentsExtension);
