@@ -28,6 +28,7 @@ namespace Joby\Bracketeer;
 use Joby\Bracketeer\Tags\EmbedTagHandler;
 use Joby\Bracketeer\Tags\LinkTagHandler;
 use League\CommonMark\Environment\Environment;
+use League\CommonMark\Exception\CommonMarkException;
 use League\CommonMark\Extension\Attributes\AttributesExtension;
 use League\CommonMark\Extension\DescriptionList\DescriptionListExtension;
 use League\CommonMark\Extension\DisallowedRawHtml\DisallowedRawHtmlExtension;
@@ -44,8 +45,8 @@ use Stringable;
 
 class Bracketeer
 {
-    const string REGEX_BRACKETEER_TAG = '\[([a-z0-9_]+)?\[(.+?(\|[^]]+)*)\]\]';
-    const array DEFAULT_CONFIG = [
+    const REGEX_BRACKETEER_TAG = '\[([a-z0-9_]+)?\[[^]]+\]\]';
+    const DEFAULT_CONFIG = [
         'bracketeer' => [
             'inline_tags' => [
                 'link' => LinkTagHandler::class,
@@ -91,6 +92,8 @@ class Bracketeer
     }
 
     /**
+     * @internal This is a helper function for parsing bracketeer tags and shouldn't be used directly.
+     *
      * @param string $tag
      *
      * @return array{tag:string,parts:array<string>}
@@ -115,6 +118,9 @@ class Bracketeer
         ];
     }
 
+    /**
+     * @throws CommonMarkException
+     */
     public function parse(string|Stringable $content): RenderedContentInterface
     {
         return $this->converter()->convert($content);

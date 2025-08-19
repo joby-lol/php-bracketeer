@@ -28,39 +28,39 @@ namespace Joby\Bracketeer;
 /**
  * Class to represent an embeddable element that has been resolved by a system resolver.
  */
-class ResolvedEmbed
+readonly class ResolvedEmbed
 {
     /**
-     * @var string|null The resolved URL of where this media can be viewed or downloaded independently.
+     * @var string The resolved URL of where this media can be viewed or downloaded independently.
      */
-    public readonly string $url;
+    public string $url;
     /**
      * @var string|null The title of the media, if available, to be used in the link's title attribute, or potentially
      *      in other UI locations as needed. May be made publicly visible.
      */
-    public readonly string|null $title;
+    public string|null $title;
     /**
      * @var string|null The caption of the embed, if available. This is included in the figcaption element of the
      *                  default templates, if provided.
      */
-    public readonly string|null $caption;
+    public string|null $caption;
     /**
      * @var string A string representing the "type" of the media, such as "image", "video", "audio", etc. This class
      *      includes templates for a few types, and if you want to add your own, that is relatively easy by either
      *      overriding the TEMPLATES constant or the entire buildHtml() method in the MediaResolver class.
      */
-    public readonly string $type;
+    public string $type;
     /**
      * @var array Any additional data that was passed to the resolver for rendering this media. This is not used by the
      *      default templates but may be useful for your own custom HTML-building processes if you are extending the
      *      MediaResolver class.
      */
-    public readonly array $data;
+    public array $data;
     /**
      * @var bool Whether the media source is considered "trusted" and should not be checked for malicious content. Null
      *      will use the main config option.
      */
-    public readonly bool|null $trusted;
+    public bool|null $trusted;
 
     /**
      * @param string      $url      The resolved URL of where this media can be viewed or downloaded independently.

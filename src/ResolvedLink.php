@@ -28,29 +28,29 @@ namespace Joby\Bracketeer;
 /**
  * Class to represent a link that has been resolved by a system resolver.
  */
-class ResolvedLink
+readonly class ResolvedLink
 {
     /**
      * @var string The full resolved URL
      */
-    public readonly string $url;
+    public string $url;
     /**
      * @var string|null The title of the link, if available, to be used in the link's title attribute
      */
-    public readonly string|null $title;
+    public string|null $title;
     /**
      * @var string|null The default text to be used for the link, if available
      */
-    public readonly string|null $default_text;
+    public string|null $default_text;
     /**
      * @var bool|null Whether the link should open in a new window, if there should be an opinion on this
      */
-    public readonly bool|null $new_window;
+    public bool|null $new_window;
     /**
      * @var bool Whether the link is considered "trusted" and should not be checked for malicious content. Null will
      *      use the main config option.
      */
-    public readonly bool|null $trusted;
+    public bool|null $trusted;
 
     /**
      * @param string      $url          The full resolved URL

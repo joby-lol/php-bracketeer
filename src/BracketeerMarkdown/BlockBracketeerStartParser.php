@@ -45,9 +45,12 @@ class BlockBracketeerStartParser implements BlockStartParserInterface, Configura
     public function tryStart(Cursor $cursor, MarkdownParserStateInterface $parserState): ?BlockStart
     {
         if ($cursor->isIndented()) return BlockStart::none();
+        // short circuit if the first non-whitespace character is not a bracket
+        if ($cursor->getNextNonSpaceCharacter() != '[') return BlockStart::none();
+        // get the current line trimmed
         $line = trim($cursor->getLine());
         // try to match the entire line
-        $matched = preg_match('/^' . Bracketeer::REGEX_BRACKETEER_TAG . '$/', $line, $matches);
+        $matched = preg_match('/^' . Bracketeer::REGEX_BRACKETEER_TAG . '$/', $line);
         if (!$matched) return BlockStart::none();
         // ensure that there is a block tag handler for this tag name
         $parsed = Bracketeer::parseTag($line);

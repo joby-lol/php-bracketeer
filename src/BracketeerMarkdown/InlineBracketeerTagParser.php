@@ -26,7 +26,6 @@
 namespace Joby\Bracketeer\BracketeerMarkdown;
 
 use Joby\Bracketeer\Bracketeer;
-use League\CommonMark\Parser\Block\BlockStart;
 use League\CommonMark\Parser\Inline\InlineParserInterface;
 use League\CommonMark\Parser\Inline\InlineParserMatch;
 use League\CommonMark\Parser\InlineParserContext;

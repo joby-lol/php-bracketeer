@@ -33,6 +33,7 @@ use League\CommonMark\Renderer\NodeRendererInterface;
 use League\Config\ConfigurationAwareInterface;
 use League\Config\ConfigurationInterface;
 use RuntimeException;
+use Stringable;
 
 class BracketeerTagRenderer implements NodeRendererInterface, ConfigurationAwareInterface
 {
@@ -47,19 +48,20 @@ class BracketeerTagRenderer implements NodeRendererInterface, ConfigurationAware
 
     /**
      * @param BracketeerTagBlock|BracketeerTagInline $node
-     * @param ChildNodeRendererInterface             $childRenderer
+     *
+     * @noinspection PhpDocSignatureInspection
      */
-    public function render(Node $node, ChildNodeRendererInterface $childRenderer)
+    public function render(Node $node, ChildNodeRendererInterface $childRenderer): string|Stringable
     {
 
         if ($node instanceof BracketeerTagBlock) {
             $handler = $this->blockHandler($node->tag);
             if (!$handler) return ErrorBuilder::block('No block handler for tag: ' . htmlspecialchars($node->tag));
-            return $handler->render($node->tag, $node->parts,true);
+            return $handler->render($node->tag, $node->parts, true);
         } elseif ($node instanceof BracketeerTagInline) {
             $handler = $this->inlineHandler($node->tag);
             if (!$handler) return ErrorBuilder::inline('No inline handler for tag: ' . htmlspecialchars($node->tag));
-            return $handler->render($node->tag, $node->parts,false);
+            return $handler->render($node->tag, $node->parts, false);
         } else {
             throw new RuntimeException('Invalid node type: ' . $node::class);
         }

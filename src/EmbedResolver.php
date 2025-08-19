@@ -44,18 +44,18 @@ class EmbedResolver
      *
      * @var array<string, string>
      */
-    const array TEMPLATES_BLOCK = [
+    const  TEMPLATES_BLOCK = [
         'image' => '<figure class="bracketeer-embed bracketeer-embed--image"><img src="{url}" alt="{title}" />{caption}</figure>',
         'video' => '<figure class="bracketeer-embed bracketeer-embed--video"><video src="{url}" controls></video>{caption}</figure>',
         'audio' => '<figure class="bracketeer-embed bracketeer-embed--audio"><audio src="{url}" controls></audio>{caption}</figure>',
         'link' => '<figure class="bracketeer-embed bracketeer-embed--link"><a href="{url}">{title}</a>{caption}</figure>',
     ];
-    const array TEMPLATES_INLINE = [
+    const  TEMPLATES_INLINE = [
         'image' => '<img src="{url}" alt="{title}" />',
         'link' => '<a href="{url}">{title}</a>',
     ];
-    const string DEFAULT_BLOCK_TEMPLATE = '<figure class="bracketeer-embed bracketeer-embed--link"><a href="{url}">{title}</a>{caption}</figure>';
-    const string DEFAULT_INLINE_TEMPLATE = '<a href="{url}">{title}</a>';
+    const  DEFAULT_BLOCK_TEMPLATE = '<figure class="bracketeer-embed bracketeer-embed--link"><a href="{url}">{title}</a>{caption}</figure>';
+    const  DEFAULT_INLINE_TEMPLATE = '<a href="{url}">{title}</a>';
     protected ConfigurationInterface $config;
     protected array $resolvers = [];
 
