@@ -23,18 +23,38 @@
  * SOFTWARE.
  */
 
-namespace Joby\Bracketeer\MarkdownLinks;
+namespace Joby\Bracketeer\BracketeerMarkdown;
 
-use League\CommonMark\Extension\CommonMark\Node\Inline\AbstractWebResource;
+use Joby\Bracketeer\LinkResolver;
+use League\CommonMark\Extension\CommonMark\Node\Inline\Link;
+use League\CommonMark\Node\Node;
+use League\CommonMark\Renderer\ChildNodeRendererInterface;
+use League\CommonMark\Renderer\NodeRendererInterface;
+use League\Config\ConfigurationAwareInterface;
+use League\Config\ConfigurationInterface;
 
-class BracketeerLink extends AbstractWebResource
+class LinkResolverAndRenderer implements NodeRendererInterface, ConfigurationAwareInterface
 {
-    public function __construct(
-        string                      $url,
-        public readonly string|null $title,
-        public readonly bool        $new_window,
-    )
+    private ConfigurationInterface $config;
+
+    public function setConfiguration(ConfigurationInterface $configuration): void
     {
-        parent::__construct($url);
+        $this->config = $configuration;
+    }
+
+    /**
+     * @param Link $node
+     */
+    public function render(Node $node, ChildNodeRendererInterface $childRenderer)
+    {
+        Link::assertInstanceOf($node);
+        $resolver = $this->config->get('bracketeer')['link_resolver'];
+        assert($resolver instanceof LinkResolver);
+        return $resolver->render(
+            $node->getUrl(),
+            $node->getTitle(),
+            $node->hasChildren() ? $childRenderer->renderNodes($node->children()) : null,
+            false,
+        );
     }
 }

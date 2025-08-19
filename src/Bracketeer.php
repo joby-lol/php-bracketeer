@@ -25,9 +25,8 @@
 
 namespace Joby\Bracketeer;
 
-use Joby\Bracketeer\Tags\LinkTagHandler;
 use Joby\Bracketeer\Tags\EmbedTagHandler;
-use Joby\Bracketeer\Text\TextParser;
+use Joby\Bracketeer\Tags\LinkTagHandler;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\Attributes\AttributesExtension;
 use League\CommonMark\Extension\DescriptionList\DescriptionListExtension;
@@ -45,14 +44,18 @@ use Stringable;
 
 class Bracketeer
 {
-    const string REGEX_BRACKETEER_TAG = '\[([a-z]+)\[(.+?\^?(\|.*?)*)\]\]';
-    const string REGEX_WIKILINK_TAG = '\[\[(.+?\^?(\|.*?)*)\]\]';
+    const string REGEX_BRACKETEER_TAG = '\[([a-z0-9_]+)?\[(.+?(\|[^]]+)*)\]\]';
     const array DEFAULT_CONFIG = [
         'bracketeer' => [
-            'inline_tags' => [],
-            'block_tags' => [],
+            'inline_tags' => [
+                'link' => LinkTagHandler::class,
+                'embed' => EmbedTagHandler::class,
+            ],
+            'block_tags' => [
+                'embed' => EmbedTagHandler::class,
+            ],
             'link_resolver' => null,
-            'media_resolver' => null,
+            'embed_resolver' => null,
         ],
         'renderer' => [
             'block_separator' => PHP_EOL,
@@ -66,7 +69,8 @@ class Bracketeer
         'table_of_contents' => [
             'position' => 'placeholder',
             'placeholder' => '[TOC]',
-        ]
+        ],
+        'enable_front_matter' => false,
     ];
 
     protected MarkdownConverter|null $commonmark = null;
@@ -82,11 +86,33 @@ class Bracketeer
             static::DEFAULT_CONFIG,
             $this->config
         );
-        $this->config['bracketeer']['text_parser'] ??= new TextParser();
         $this->config['bracketeer']['link_resolver'] ??= new LinkResolver();
-        $this->config['bracketeer']['media_resolver'] ??= new EmbedResolver();
-        $this->config['bracketeer']['inline_tags']['link'] ??= new LinkTagHandler();
-        $this->config['bracketeer']['block_tags']['media'] ??= new EmbedTagHandler();
+        $this->config['bracketeer']['embed_resolver'] ??= new EmbedResolver();
+    }
+
+    /**
+     * @param string $tag
+     *
+     * @return array{tag:string,parts:array<string>}
+     */
+    public static function parseTag(string $tag): array
+    {
+        $tag = trim($tag);
+        $tag = substr($tag, 1, strlen($tag) - 3);
+        $tag = explode('[', $tag, 2);
+        // get tag name
+        $tag_name = $tag[0] ?: 'link';
+        $tag_name = trim($tag_name);
+        $tag_name = strtolower($tag_name);
+        // parse parts/arguments
+        $parts = explode('|', $tag[1]);
+        $parts = array_map('trim', $parts);
+        $parts = array_filter($parts, fn($part) => $part !== '');
+        // return
+        return [
+            'tag' => $tag_name,
+            'parts' => $parts,
+        ];
     }
 
     public function parse(string|Stringable $content): RenderedContentInterface
@@ -99,9 +125,8 @@ class Bracketeer
         if (is_null($this->commonmark)) {
             $environment = new Environment($this->config);
             // manually set config where necessary
-            $this->config['bracketeer']['text_parser']->setConfiguration($environment->getConfiguration());
             $this->config['bracketeer']['link_resolver']->setConfiguration($environment->getConfiguration());
-            $this->config['bracketeer']['media_resolver']->setConfiguration($environment->getConfiguration());
+            $this->config['bracketeer']['embed_resolver']->setConfiguration($environment->getConfiguration());
             // set config on inline and block tags if necessary
             foreach ($this->config['bracketeer']['inline_tags'] as $handler) {
                 if ($handler instanceof ConfigurationAwareInterface) $handler->setConfiguration($environment->getConfiguration());

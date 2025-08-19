@@ -23,35 +23,31 @@
  * SOFTWARE.
  */
 
-namespace Joby\Bracketeer\Tags;
+namespace Joby\Bracketeer\BracketeerMarkdown;
 
-use Joby\Bracketeer\LinkResolver;
-use League\Config\ConfigurationAwareInterface;
-use League\Config\ConfigurationInterface;
-use Stringable;
+use League\CommonMark\Node\Block\AbstractBlock;
+use League\CommonMark\Parser\Block\AbstractBlockContinueParser;
+use League\CommonMark\Parser\Block\BlockContinue;
+use League\CommonMark\Parser\Block\BlockContinueParserInterface;
+use League\CommonMark\Parser\Cursor;
 
-class LinkTagHandler implements TagHandler, ConfigurationAwareInterface
+class BlockBracketeerParser extends AbstractBlockContinueParser
 {
-    protected ConfigurationInterface $config;
+    protected BracketeerTagBlock $block;
 
-    public function setConfiguration(ConfigurationInterface $configuration): void
+    public function __construct(string $tag, array $parts)
     {
-        $this->config = $configuration;
+        $this->block = new BracketeerTagBlock($tag, $parts);
     }
 
-    public function render(string $tag, array $parts, bool $block): string|Stringable
+    public function getBlock(): AbstractBlock
     {
-        $url = $parts[0];
-        $title = $parts[1] ?? null;
-        if (str_ends_with($url, '^')) {
-            $url = substr($url, 0, strlen($url) - 1);
-            $new_window = true;
-        } else {
-            $new_window = false;
-        }
-        // build HTML
-        $resolver = $this->config->get('bracketeer')['link_resolver'];
-        assert($resolver instanceof LinkResolver);
-        return $resolver->render($url, null, $title, $new_window);
+        return $this->block;
+    }
+
+    public function tryContinue(Cursor $cursor, BlockContinueParserInterface $activeBlockParser): ?BlockContinue
+    {
+        // Bracketeer tags are always one line, so always fail to match
+        return BlockContinue::none();
     }
 }

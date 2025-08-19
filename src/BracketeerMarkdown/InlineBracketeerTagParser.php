@@ -23,14 +23,17 @@
  * SOFTWARE.
  */
 
-namespace Joby\Bracketeer\Tags;
+namespace Joby\Bracketeer\BracketeerMarkdown;
 
-use Joby\Bracketeer\LinkResolver;
+use Joby\Bracketeer\Bracketeer;
+use League\CommonMark\Parser\Block\BlockStart;
+use League\CommonMark\Parser\Inline\InlineParserInterface;
+use League\CommonMark\Parser\Inline\InlineParserMatch;
+use League\CommonMark\Parser\InlineParserContext;
 use League\Config\ConfigurationAwareInterface;
 use League\Config\ConfigurationInterface;
-use Stringable;
 
-class LinkTagHandler implements TagHandler, ConfigurationAwareInterface
+class InlineBracketeerTagParser implements InlineParserInterface, ConfigurationAwareInterface
 {
     protected ConfigurationInterface $config;
 
@@ -39,19 +42,22 @@ class LinkTagHandler implements TagHandler, ConfigurationAwareInterface
         $this->config = $configuration;
     }
 
-    public function render(string $tag, array $parts, bool $block): string|Stringable
+    public function getMatchDefinition(): InlineParserMatch
     {
-        $url = $parts[0];
-        $title = $parts[1] ?? null;
-        if (str_ends_with($url, '^')) {
-            $url = substr($url, 0, strlen($url) - 1);
-            $new_window = true;
-        } else {
-            $new_window = false;
+        return InlineParserMatch::regex(Bracketeer::REGEX_BRACKETEER_TAG);
+    }
+
+    public function parse(InlineParserContext $inlineContext): bool
+    {
+        $matches = $inlineContext->getMatches();
+        // Parse and verify tag is a configured block tag
+        $parsed = Bracketeer::parseTag($matches[0]);
+        $inlineTags = $this->config->get('bracketeer')['inline_tags'] ?? [];
+        if (!array_key_exists($parsed['tag'], $inlineTags)) {
+            return false;
         }
-        // build HTML
-        $resolver = $this->config->get('bracketeer')['link_resolver'];
-        assert($resolver instanceof LinkResolver);
-        return $resolver->render($url, null, $title, $new_window);
+        $inlineContext->getCursor()->advanceBy(strlen($matches[0]));
+        $inlineContext->getContainer()->appendChild(new BracketeerTagInline($parsed['tag'], $parsed['parts']));
+        return true;
     }
 }

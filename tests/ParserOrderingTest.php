@@ -23,40 +23,47 @@
  * SOFTWARE.
  */
 
-namespace Joby\Bracketeer\MarkdownLinks;
+namespace Joby\Bracketeer;
 
-use Joby\Bracketeer\ErrorBuilder;
-use Joby\Bracketeer\LinkResolver;
-use League\CommonMark\Node\Node;
-use League\CommonMark\Renderer\ChildNodeRendererInterface;
-use League\CommonMark\Renderer\NodeRendererInterface;
-use League\CommonMark\Util\HtmlElement;
-use League\CommonMark\Util\RegexHelper;
-use League\Config\ConfigurationAwareInterface;
-use League\Config\ConfigurationInterface;
+use PHPUnit\Framework\TestCase;
 
-class BracketeerLinkRenderer implements NodeRendererInterface, ConfigurationAwareInterface
+class ParserOrderingTest extends TestCase
 {
-    private ConfigurationInterface $config;
+    protected Bracketeer $parser;
 
-    public function setConfiguration(ConfigurationInterface $configuration): void
+    public function testEscapesPreventParsing()
     {
-        $this->config = $configuration;
+        $this->assertStringContainsString(
+            '[[link]]',
+            $this->parser->parse('\[[link]]')
+        );
     }
 
-    /**
-     * @param BracketeerLink $node
-     */
-    public function render(Node $node, ChildNodeRendererInterface $childRenderer)
+    public function testCodePreventParsing()
     {
-        BracketeerLink::assertInstanceOf($node);
-        $resolver = $this->config->get('bracketeer')['link_resolver'];
-        assert($resolver instanceof LinkResolver);
-        return $resolver->render(
-            $node->getUrl(),
-            $node->title,
-            $node->hasChildren() ? $childRenderer->renderNodes($node->children()) : null,
-            $node->new_window,
+        $this->assertStringContainsString(
+            '[[link]]',
+            $this->parser->parse('```[[link]]```')
         );
+        $this->assertStringContainsString(
+            '[[link]]',
+            $this->parser->parse('`[[link]]`')
+        );
+    }
+
+    public function testBlockquoteAllowsBlockTags()
+    {
+        // embed tags should work inside blockquotes, but they'll be rendered as inlines
+        $this->assertStringContainsString(
+            '<img ',
+            $this->parser->parse('> [embed[test.jpg]]')
+        );
+    }
+
+    protected function setUp(): void
+    {
+        $this->parser = new Bracketeer([
+            'allow_unsafe_links' => true
+        ]);
     }
 }

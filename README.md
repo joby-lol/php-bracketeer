@@ -1,19 +1,17 @@
 # Bracketeer
 
-Bracketeer is a web-authoring markup language designed to combine the best features of Markdown and bbCode-style
-shortcodes
-into one intuitive and flexible plaintext web-authoring language that can be easily integrated into a variety of
-contexts.
+Bracketeer is a web-authoring markup language designed to combine the best features of Markdown and wiki-inspired tags
+that use double square brackets, and are designed to be as easy as possible to extend and integrate into your own
+projects. There is also a unified system for resolving links and embedded content that is designed to be easily
+integrated into your own CMS.
 
 ## Development status
 
-This library is still very much under **active development** and should not be used in production. There is likely to be
-a large update in the future in which the architecture changes significantly around how bbcode and wiki link tags are
-parsed.
+This library is still very much under **active development** and should not be used in production.
 
 ## Installation
 
-Install with `composer install joby/bracketeer`
+Install with `composer require joby/bracketeer`
 
 Note that this language is **very much** designed to be integrated into a larger CMS of some kind. Its primary
 benefit is integrating with your own URL/slug resolution system, for linking to CMS content page. For example, if you
@@ -38,9 +36,9 @@ on the internet.
 
 ## Wiki-style links
 
-One straightforward and succinct way to make links in Bracketeer is using wiki-style links, like `[[link]]`. In bbMark
-the link isby default treated as URL. It is also possible to plug in your own slug-to-URL resolver so that your own CMS
-can take a given slug and convert it into a URL and link title.
+One straightforward and succinct way to make links in Bracketeer is using wiki-style links, like `[[link]]`. In
+Bracketeer, the link is by default treated as URL. It is also possible to plug in your own slug-to-URL resolver so that
+your own CMS can take a given slug and convert it into a URL and link title.
 
 Wiki-style links can also include an optional alternative display text, which will override any default, like
 `[[link_slug|Alternative display text]]`
@@ -62,13 +60,13 @@ such as YouTube and Vimeo.
 
 ## Advanced Markdown
 
-Above and beyond standard Markdown text formatting, bbMark always includes the following Markdown extensions:
+Above and beyond standard Markdown text formatting, Bracketeer always includes the following Markdown extensions:
 
 * [Description Lists](https://commonmark.thephpleague.com/2.5/extensions/description-lists/)
 * [Footnotes](https://commonmark.thephpleague.com/2.5/extensions/footnotes/)
 * [Heading Permalinks](https://commonmark.thephpleague.com/2.5/extensions/heading-permalinks/)
 * [Table of Contents](https://commonmark.thephpleague.com/2.5/extensions/table-of-contents/) (place a TOC in a document
-  with `[TOC]` tag)
+  with `[TOC]` tag, note that while this looks sort of like a Bracketeer tag, it is not)
 * [Tables](https://commonmark.thephpleague.com/2.5/extensions/tables/)
 
 ## Why not bbCode tags?
@@ -96,7 +94,7 @@ By default, any HTML included in content will be stripped completely. To enable 
 `"html_input" => "allow"`. This will enable HTML input -- with some caveats. You can also escape HTML input so that it
 displays the code as it was entered with `"html_input" => "escape"`.
 
-By default, bbMark matches the GFM spec and when `html_input` is set to `allow` all tags are allowed except `title`,
+By default, Bracketeer matches the GFM spec and when `html_input` is set to `allow` all tags are allowed except `title`,
 `textarea`, `style`, `xmp`, `iframe`, `noembed`, `noframes`, `script`, and `plaintext`. If you would like to configure
 this differently, you can specify your own tag blocklist via config:
 
@@ -116,4 +114,4 @@ extends it with its own extension to enable wiki-style links and both inline and
 
 While it is technically possible to use the included extensions directly, there are some features that will not be
 autoconfigured. Primarily this will impact wiki-style `[[link/path]]` links, as these will not be hooked into the main
-bbMark object which helps tie linking and embedding into your own path/slug/url-to-content resolution systems.
+Bracketeer object which helps tie linking and embedding into your own path/slug/url-to-content resolution systems.

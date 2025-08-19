@@ -23,21 +23,17 @@
  * SOFTWARE.
  */
 
-namespace Joby\Bracketeer\Text;
+namespace Joby\Bracketeer\BracketeerMarkdown;
 
-use League\CommonMark\Node\Inline\Text;
-use League\CommonMark\Node\Node;
-use League\CommonMark\Renderer\ChildNodeRendererInterface;
-use League\CommonMark\Renderer\NodeRendererInterface;
-use League\CommonMark\Xml\XmlNodeRendererInterface;
+use Joby\Bracketeer\Bracketeer;
+use League\CommonMark\Parser\Block\BlockStart;
+use League\CommonMark\Parser\Block\BlockStartParserInterface;
+use League\CommonMark\Parser\Cursor;
+use League\CommonMark\Parser\MarkdownParserStateInterface;
 use League\Config\ConfigurationAwareInterface;
 use League\Config\ConfigurationInterface;
-use Stringable;
 
-/**
- * Commonmark text renderer that does additional parsing to process wiki links and bbcode.
- */
-class BracketeerTextRenderer implements NodeRendererInterface, XmlNodeRendererInterface, ConfigurationAwareInterface
+class BlockBracketeerStartParser implements BlockStartParserInterface, ConfigurationAwareInterface
 {
     protected ConfigurationInterface $config;
 
@@ -46,26 +42,21 @@ class BracketeerTextRenderer implements NodeRendererInterface, XmlNodeRendererIn
         $this->config = $configuration;
     }
 
-    /**
-     * @param Node $node
-     *
-     * @return null|string|Stringable
-     */
-    public function render(Node $node, ChildNodeRendererInterface $childRenderer): string
+    public function tryStart(Cursor $cursor, MarkdownParserStateInterface $parserState): ?BlockStart
     {
-        Text::assertInstanceOf($node);
-        $text = $node->getLiteral();
-        $text = htmlentities($text, double_encode: false);
-        return $this->config->get('bracketeer')['text_parser']->parse($text);
-    }
-
-    public function getXmlTagName(Node $node): string
-    {
-        return 'text';
-    }
-
-    public function getXmlAttributes(Node $node): array
-    {
-        return [];
+        if ($cursor->isIndented()) return BlockStart::none();
+        $line = trim($cursor->getLine());
+        // try to match the entire line
+        $matched = preg_match('/^' . Bracketeer::REGEX_BRACKETEER_TAG . '$/', $line, $matches);
+        if (!$matched) return BlockStart::none();
+        // ensure that there is a block tag handler for this tag name
+        $parsed = Bracketeer::parseTag($line);
+        $block_tags = $this->config->get('bracketeer')['block_tags'] ?? [];
+        if (!array_key_exists($parsed['tag'], $block_tags)) return BlockStart::none();
+        // advance to the end of the string, consuming the entire line
+        $cursor->advanceToEnd();
+        return BlockStart::of(
+            new BlockBracketeerParser($parsed['tag'], $parsed['parts'])
+        )->at($cursor);
     }
 }

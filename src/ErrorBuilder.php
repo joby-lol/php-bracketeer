@@ -29,6 +29,11 @@ use League\CommonMark\Util\HtmlElement;
 
 class ErrorBuilder
 {
+    public static function error(string $message, bool $block = false): HtmlElement
+    {
+        return $block ? self::block($message) : self::inline($message);
+    }
+
     public static function inline(string $message): HtmlElement
     {
         return new HtmlElement(

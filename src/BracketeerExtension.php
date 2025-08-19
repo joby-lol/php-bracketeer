@@ -25,10 +25,13 @@
 
 namespace Joby\Bracketeer;
 
-use Joby\Bracketeer\MarkdownLinks\MarkdownLinkRenderer;
+use Joby\Bracketeer\BracketeerMarkdown\BlockBracketeerStartParser;
+use Joby\Bracketeer\BracketeerMarkdown\BracketeerTagBlock;
+use Joby\Bracketeer\BracketeerMarkdown\BracketeerTagInline;
+use Joby\Bracketeer\BracketeerMarkdown\BracketeerTagRenderer;
+use Joby\Bracketeer\BracketeerMarkdown\InlineBracketeerTagParser;
+use Joby\Bracketeer\BracketeerMarkdown\LinkResolverAndRenderer;
 use Joby\Bracketeer\Tags\TagHandler;
-use Joby\Bracketeer\Text\BracketeerTextRenderer;
-use Joby\Bracketeer\Text\TextParser;
 use League\CommonMark\Environment\EnvironmentBuilderInterface;
 use League\CommonMark\Extension\CommonMark\Delimiter\Processor\EmphasisDelimiterProcessor;
 use League\CommonMark\Extension\CommonMark\Node;
@@ -58,27 +61,32 @@ class BracketeerExtension implements ConfigurableExtensionInterface
         ]));
         $builder->addSchema('bracketeer', Expect::structure([
             'block_tags' => Expect::arrayOf(
-                Expect::type(TagHandler::class),
-                Expect::string()->pattern('[a-z][a-z0-9]*')
+                Expect::anyOf(
+                    Expect::type(TagHandler::class),
+                    Expect::string()->assert(fn(string $value) => is_a($value, TagHandler::class, true))
+                ),
+                Expect::string()->pattern('[a-z0-9_]+')
             ),
             'inline_tags' => Expect::arrayOf(
-                Expect::type(TagHandler::class),
-                Expect::string()->pattern('[a-z][a-z0-9]*')
+                Expect::anyOf(
+                    Expect::type(TagHandler::class),
+                    Expect::string()->assert(fn(string $value) => is_a($value, TagHandler::class, true))
+                ),
+                Expect::string()->pattern('[a-z0-9_]+')
             ),
             'link_resolver' => Expect::type(LinkResolver::class),
-            'media_resolver' => Expect::type(EmbedResolver::class),
-            'text_parser' => Expect::type(TextParser::class),
+            'embed_resolver' => Expect::type(EmbedResolver::class),
         ]));
     }
 
     public function register(EnvironmentBuilderInterface $environment): void
     {
+        $tag_renderer = new BracketeerTagRenderer();
         $environment
-            // this is mostly basically the same as the core commonmark extension
+            // more or less the standard commonmark parsers
             ->addBlockStartParser(new Parser\Block\BlockQuoteStartParser(), 70)
             ->addBlockStartParser(new Parser\Block\HeadingStartParser(), 60)
             ->addBlockStartParser(new Parser\Block\FencedCodeStartParser(), 50)
-            ->addBlockStartParser(new Parser\Block\HtmlBlockStartParser(), 40)
             ->addBlockStartParser(new Parser\Block\ThematicBreakStartParser(), 20)
             ->addBlockStartParser(new Parser\Block\ListBlockStartParser(), 10)
             ->addBlockStartParser(new Parser\Block\IndentedCodeStartParser(), -100)
@@ -87,15 +95,15 @@ class BracketeerExtension implements ConfigurableExtensionInterface
             ->addInlineParser(new Parser\Inline\EscapableParser(), 80)
             ->addInlineParser(new Parser\Inline\EntityParser(), 70)
             ->addInlineParser(new Parser\Inline\AutolinkParser(), 50)
-            ->addInlineParser(new Parser\Inline\HtmlInlineParser(), 40)
             ->addInlineParser(new Parser\Inline\CloseBracketParser(), 30)
             ->addInlineParser(new Parser\Inline\OpenBracketParser(), 20)
             ->addInlineParser(new Parser\Inline\BangParser(), 10)
+            // more or less the standard commonmark renderers
+            ->addRenderer(CoreNode\Inline\Text::class, new CoreRenderer\Inline\TextRenderer())
             ->addRenderer(Node\Block\BlockQuote::class, new Renderer\Block\BlockQuoteRenderer(), 0)
             ->addRenderer(CoreNode\Block\Document::class, new CoreRenderer\Block\DocumentRenderer(), 0)
             ->addRenderer(Node\Block\FencedCode::class, new Renderer\Block\FencedCodeRenderer(), 0)
             ->addRenderer(Node\Block\Heading::class, new Renderer\Block\HeadingRenderer(), 0)
-            ->addRenderer(Node\Block\HtmlBlock::class, new Renderer\Block\HtmlBlockRenderer(), 0)
             ->addRenderer(Node\Block\IndentedCode::class, new Renderer\Block\IndentedCodeRenderer(), 0)
             ->addRenderer(Node\Block\ListBlock::class, new Renderer\Block\ListBlockRenderer(), 0)
             ->addRenderer(Node\Block\ListItem::class, new Renderer\Block\ListItemRenderer(), 0)
@@ -103,15 +111,18 @@ class BracketeerExtension implements ConfigurableExtensionInterface
             ->addRenderer(Node\Block\ThematicBreak::class, new Renderer\Block\ThematicBreakRenderer(), 0)
             ->addRenderer(Node\Inline\Code::class, new Renderer\Inline\CodeRenderer(), 0)
             ->addRenderer(Node\Inline\Emphasis::class, new Renderer\Inline\EmphasisRenderer(), 0)
-            ->addRenderer(Node\Inline\HtmlInline::class, new Renderer\Inline\HtmlInlineRenderer(), 0)
             // TODO: explore a way of resolving Markdown images as full-on bracketeer embeds
             ->addRenderer(Node\Inline\Image::class, new Renderer\Inline\ImageRenderer(), 0)
             ->addRenderer(CoreNode\Inline\Newline::class, new CoreRenderer\Inline\NewlineRenderer(), 0)
             ->addRenderer(Node\Inline\Strong::class, new Renderer\Inline\StrongRenderer(), 0)
-            // note that this is not the core link renderer, because we use our own system so they can resolve the same way as other tags
-            ->addRenderer(Node\Inline\Link::class, new MarkdownLinkRenderer())
-            // Note that this is not the core text renderer, because we use our own to process bbcode and wiki link tags
-            ->addRenderer(CoreNode\Inline\Text::class, new BracketeerTextRenderer($environment));
+            // custom bracketeer tag parsers
+            ->addInlineParser(new InlineBracketeerTagParser(), 60)
+            ->addBlockStartParser(new BlockBracketeerStartParser(), 60)
+            // custom bracketeer tag renderers
+            ->addRenderer(BracketeerTagBlock::class, $tag_renderer)
+            ->addRenderer(BracketeerTagInline::class, $tag_renderer)
+            // custom markdown syntax link renderer to unify link resolution and rendering
+            ->addRenderer(Node\Inline\Link::class, new LinkResolverAndRenderer());
         // emphasis processing now happens differently because of that security thing where tons of asterisks blows up CPU use
         if ($environment->getConfiguration()->get('commonmark/use_asterisk')) {
             $environment->addDelimiterProcessor(new EmphasisDelimiterProcessor('*'));

@@ -1,5 +1,28 @@
 <?php
 
+/**
+ * Bracketeer: https://go.joby.lol/php-bracketeer
+ * MIT License: Copyright (c) 2024 Joby Elliott
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 namespace Joby\Bracketeer;
 
 use League\CommonMark\Util\RegexHelper;
@@ -21,12 +44,18 @@ class EmbedResolver
      *
      * @var array<string, string>
      */
-    const array TEMPLATES = [
+    const array TEMPLATES_BLOCK = [
         'image' => '<figure class="bracketeer-embed bracketeer-embed--image"><img src="{url}" alt="{title}" />{caption}</figure>',
         'video' => '<figure class="bracketeer-embed bracketeer-embed--video"><video src="{url}" controls></video>{caption}</figure>',
         'audio' => '<figure class="bracketeer-embed bracketeer-embed--audio"><audio src="{url}" controls></audio>{caption}</figure>',
         'link' => '<figure class="bracketeer-embed bracketeer-embed--link"><a href="{url}">{title}</a>{caption}</figure>',
     ];
+    const array TEMPLATES_INLINE = [
+        'image' => '<img src="{url}" alt="{title}" />',
+        'link' => '<a href="{url}">{title}</a>',
+    ];
+    const string DEFAULT_BLOCK_TEMPLATE = '<figure class="bracketeer-embed bracketeer-embed--link"><a href="{url}">{title}</a>{caption}</figure>';
+    const string DEFAULT_INLINE_TEMPLATE = '<a href="{url}">{title}</a>';
     protected ConfigurationInterface $config;
     protected array $resolvers = [];
 
@@ -58,9 +87,10 @@ class EmbedResolver
         $this->config = $configuration;
     }
 
-    public function buildHtml(ResolvedEmbed $media): string|Stringable|null
+    public function buildHtml(ResolvedEmbed $media, string|null $title, bool $block): string|Stringable|null
     {
-        $template = self::TEMPLATES[$media->type] ?? null;
+        if ($block) $template = self::TEMPLATES_BLOCK[$media->type] ?? self::DEFAULT_BLOCK_TEMPLATE;
+        else $template = self::TEMPLATES_INLINE[$media->type] ?? self::DEFAULT_INLINE_TEMPLATE;
         if (!$template) return null;
         return str_replace(
             [
@@ -70,26 +100,26 @@ class EmbedResolver
             ],
             [
                 $media->url,
-                $media->title,
+                $title ?? $media->title,
                 $media->caption ? sprintf('<figcaption>%s</figcaption>', $media->caption) : '',
             ],
             $template
         );
     }
 
-    public function render(string $url, string|null $title): string|Stringable
+    public function render(string $url, string|null $title, bool $block): string|Stringable
     {
         $resolved = $this->resolve($url);
         if (!$resolved) return ErrorBuilder::block('Media could not be resolved');
         // forbid unsafe links
         if (!$resolved->trusted && !$this->config->get('allow_unsafe_links')) {
             if (RegexHelper::isLinkPotentiallyUnsafe($url)) {
-                return ErrorBuilder::inline('Untrusted and potentially unsafe media');
+                return ErrorBuilder::error('Untrusted and potentially unsafe media', $block);
             }
         }
         // render HTML
-        return $this->buildHtml($resolved)
-            ?? ErrorBuilder::block('Media could not be rendered');
+        return $this->buildHtml($resolved, $title, $block)
+            ?? ErrorBuilder::error('Media could not be rendered', $block);
     }
 
     protected function defaultResolve(string $url): ResolvedEmbed|null
@@ -100,6 +130,6 @@ class EmbedResolver
         if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'])) $type = 'image';
         elseif (in_array($extension, ['mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv'])) $type = 'video';
         elseif (in_array($extension, ['mp3', 'wav', 'ogg', 'flac', 'aac'])) $type = 'audio';
-        return new ResolvedEmbed($url, $title, $type);
+        return new ResolvedEmbed($url, $title, null, $type);
     }
 }
