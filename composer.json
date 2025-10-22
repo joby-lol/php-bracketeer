@@ -20,7 +20,7 @@
     }
   ],
   "require": {
-    "php": "~8.2",
+    "php": "~8.3",
     "league/commonmark": "~2.7",
     "symfony/yaml": "~7.0",
     "ext-mbstring": "*"
