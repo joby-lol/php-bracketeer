@@ -39,10 +39,12 @@ use Stringable;
 class LinkResolver implements ConfigurationAwareInterface
 {
     protected ConfigurationInterface $config;
+
+    /** @var array<callable(string):(ResolvedLink|null)> $resolvers */
     protected array $resolvers = [];
 
     /**
-     * @param callable(string):ResolvedLink|null ...$resolvers
+     * @param callable(string):(ResolvedLink|null) ...$resolvers
      */
     public function __construct(callable ...$resolvers)
     {

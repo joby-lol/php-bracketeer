@@ -51,6 +51,8 @@ class InlineBracketeerTagParser implements InlineParserInterface, ConfigurationA
         $matches = $inlineContext->getMatches();
         // Parse and verify tag is a configured block tag
         $parsed = Bracketeer::parseTag($matches[0]);
+        /** @var array<string,TagHandler|class-string<TagHandler>> $inlineTags */
+        // @phpstan-ignore-next-line it's definitely an array
         $inlineTags = $this->config->get('bracketeer')['inline_tags'] ?? [];
         if (!array_key_exists($parsed['tag'], $inlineTags)) {
             return false;

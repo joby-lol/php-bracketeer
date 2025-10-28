@@ -50,17 +50,23 @@ class EmbedResolver
         'audio' => '<figure class="bracketeer-embed bracketeer-embed--audio"><audio src="{url}" controls></audio>{caption}</figure>',
         'link' => '<figure class="bracketeer-embed bracketeer-embed--link"><a href="{url}">{title}</a>{caption}</figure>',
     ];
+
     const  TEMPLATES_INLINE = [
         'image' => '<img src="{url}" alt="{title}" />',
         'link' => '<a href="{url}">{title}</a>',
     ];
+
     const  DEFAULT_BLOCK_TEMPLATE = '<figure class="bracketeer-embed bracketeer-embed--link"><a href="{url}">{title}</a>{caption}</figure>';
+
     const  DEFAULT_INLINE_TEMPLATE = '<a href="{url}">{title}</a>';
+
     protected ConfigurationInterface $config;
+
+    /** @var array<callable(string):(ResolvedEmbed|null)> $resolvers */
     protected array $resolvers = [];
 
     /**
-     * @param callable(string):ResolvedLink|null ...$resolvers
+     * @param callable(string):(ResolvedEmbed|null) ...$resolvers
      */
     public function __construct(callable ...$resolvers)
     {
@@ -91,7 +97,6 @@ class EmbedResolver
     {
         if ($block) $template = self::TEMPLATES_BLOCK[$media->type] ?? self::DEFAULT_BLOCK_TEMPLATE;
         else $template = self::TEMPLATES_INLINE[$media->type] ?? self::DEFAULT_INLINE_TEMPLATE;
-        if (!$template) return null;
         return str_replace(
             [
                 '{url}',
@@ -100,7 +105,7 @@ class EmbedResolver
             ],
             [
                 $media->url,
-                $title ?? $media->title,
+                $title ?? $media->title ?? 'Unknown title',
                 $media->caption ? sprintf('<figcaption>%s</figcaption>', $media->caption) : '',
             ],
             $template

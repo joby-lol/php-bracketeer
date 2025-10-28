@@ -28,6 +28,8 @@ namespace Joby\Bracketeer\Tags;
 use Joby\Bracketeer\EmbedResolver;
 use League\Config\ConfigurationAwareInterface;
 use League\Config\ConfigurationInterface;
+use League\Config\Exception\ValidationException;
+use League\Config\Exception\UnknownOptionException;
 use Stringable;
 
 class EmbedTagHandler implements TagHandler, ConfigurationAwareInterface
@@ -39,11 +41,17 @@ class EmbedTagHandler implements TagHandler, ConfigurationAwareInterface
         $this->config = $configuration;
     }
 
+    /**
+     * @param array<string|int,string> $parts 
+     * @throws ValidationException 
+     * @throws UnknownOptionException 
+     */
     public function render(string $tag, array $parts, bool $block): string|Stringable
     {
         $url = $parts[0];
         $title = $parts[1] ?? null;
         // build HTML
+        // @phpstan-ignore-next-line it's definitely an EmbedResolver
         $resolver = $this->config->get('bracketeer')['embed_resolver'];
         assert($resolver instanceof EmbedResolver);
         return $resolver->render($url, $title, $block);

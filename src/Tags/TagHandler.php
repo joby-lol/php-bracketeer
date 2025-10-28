@@ -34,5 +34,8 @@ use Stringable;
  */
 interface TagHandler
 {
+    /**
+     * @param array<string|int,string> $parts 
+     */
     public function render(string $tag, array $parts, bool $block): string|Stringable;
 }

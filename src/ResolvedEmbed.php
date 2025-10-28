@@ -51,7 +51,7 @@ readonly class ResolvedEmbed
      */
     public string $type;
     /**
-     * @var array Any additional data that was passed to the resolver for rendering this media. This is not used by the
+     * @var array<mixed> Any additional data that was passed to the resolver for rendering this media. This is not used by the
      *      default templates but may be useful for your own custom HTML-building processes if you are extending the
      *      MediaResolver class.
      */
@@ -72,7 +72,7 @@ readonly class ResolvedEmbed
      *                              "video", "audio", etc. This class includes templates for a few types, and if you
      *                              want to add your own that is relatively easy by either overriding the TEMPLATES
      *                              constant or the entire buildHtml() method in the MediaResolver class.
-     * @param array       $data     Any additional data that was passed to the resolver for rendering this media.
+     * @param array<mixed>       $data     Any additional data that was passed to the resolver for rendering this media.
      *                              This is not used by the default templates but may be useful for your own custom
      *                              HTML-building processes if you are extending the MediaResolver class.
      * @param bool|null   $trusted  Whether the media source is considered "trusted" and should not be checked for

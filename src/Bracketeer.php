@@ -27,6 +27,7 @@ namespace Joby\Bracketeer;
 
 use Joby\Bracketeer\Tags\EmbedTagHandler;
 use Joby\Bracketeer\Tags\LinkTagHandler;
+use Joby\Bracketeer\Tags\TagHandler;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Exception\CommonMarkException;
 use League\CommonMark\Extension\Attributes\AttributesExtension;
@@ -91,6 +92,20 @@ class Bracketeer
         $this->config['bracketeer']['embed_resolver'] ??= new EmbedResolver();
     }
 
+    public function linkResolver(): LinkResolver
+    {
+        assert(is_array($this->config['bracketeer']));
+        assert($this->config['bracketeer']['link_resolver'] instanceof LinkResolver);
+        return $this->config['bracketeer']['link_resolver'];
+    }
+
+    public function embedResolver(): EmbedResolver
+    {
+        assert(is_array($this->config['bracketeer']));
+        assert($this->config['bracketeer']['embed_resolver'] instanceof EmbedResolver);
+        return $this->config['bracketeer']['embed_resolver'];
+    }
+
     /**
      * @internal This is a helper function for parsing bracketeer tags and shouldn't be used directly.
      *
@@ -131,12 +146,17 @@ class Bracketeer
         if (is_null($this->commonmark)) {
             $environment = new Environment($this->config);
             // manually set config where necessary
-            $this->config['bracketeer']['link_resolver']->setConfiguration($environment->getConfiguration());
-            $this->config['bracketeer']['embed_resolver']->setConfiguration($environment->getConfiguration());
+            $this->linkResolver()->setConfiguration($environment->getConfiguration());
+            $this->embedResolver()->setConfiguration($environment->getConfiguration());
             // set config on inline and block tags if necessary
+            assert(is_array($this->config['bracketeer']));
+            assert(is_array($this->config['bracketeer']['inline_tags']));
+            /** @var TagHandler|class-string<TagHandler> $handler */
             foreach ($this->config['bracketeer']['inline_tags'] as $handler) {
                 if ($handler instanceof ConfigurationAwareInterface) $handler->setConfiguration($environment->getConfiguration());
             }
+            assert(is_array($this->config['bracketeer']['block_tags']));
+            /** @var TagHandler|class-string<TagHandler> $handler */
             foreach ($this->config['bracketeer']['block_tags'] as $handler) {
                 if ($handler instanceof ConfigurationAwareInterface) $handler->setConfiguration($environment->getConfiguration());
             }

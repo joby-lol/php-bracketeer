@@ -29,6 +29,9 @@ use League\CommonMark\Node\Block\AbstractBlock;
 
 class BracketeerTagBlock extends AbstractBlock
 {
+    /**
+     * @param array<string> $parts 
+     */
     public function __construct(
         public readonly string $tag,
         public readonly array  $parts,

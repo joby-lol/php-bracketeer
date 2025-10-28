@@ -35,6 +35,9 @@ class BlockBracketeerParser extends AbstractBlockContinueParser
 {
     protected BracketeerTagBlock $block;
 
+    /**
+     * @param array<string> $parts 
+     */
     public function __construct(string $tag, array $parts)
     {
         $this->block = new BracketeerTagBlock($tag, $parts);

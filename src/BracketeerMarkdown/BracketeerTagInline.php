@@ -29,6 +29,9 @@ use League\CommonMark\Node\Inline\AbstractInline;
 
 class BracketeerTagInline extends AbstractInline
 {
+    /**
+     * @param array<string> $parts 
+     */
     public function __construct(
         public readonly string $tag,
         public readonly array  $parts,

@@ -37,7 +37,9 @@ use Stringable;
 
 class BracketeerTagRenderer implements NodeRendererInterface, ConfigurationAwareInterface
 {
+    /** @var array<string, TagHandler|class-string<TagHandler>|null> $block_handlers */
     protected array $block_handlers = [];
+    /** @var array<string, TagHandler|class-string<TagHandler>|null> $inline_handlers */
     protected array $inline_handlers = [];
     private ConfigurationInterface $config;
 
@@ -70,38 +72,44 @@ class BracketeerTagRenderer implements NodeRendererInterface, ConfigurationAware
     protected function blockHandler(string $tag): TagHandler|null
     {
         if (!isset($this->block_handlers[$tag])) {
+            /** @var TagHandler|class-string<TagHandler>|null $handler */
+            // @phpstan-ignore-next-line it's definitely an array
             $handler = $this->config->get('bracketeer')['block_tags'][$tag];
-            if (!$handler) {
+            if (is_null($handler)) {
                 $this->block_handlers[$tag] = null;
             } else {
                 if (is_string($handler)) {
                     $handler = new $handler;
                 }
-                $this->block_handlers[$tag] = $handler;
-                if ($this->block_handlers[$tag] instanceof ConfigurationAwareInterface) {
-                    $this->block_handlers[$tag]->setConfiguration($this->config);
+                if ($handler instanceof ConfigurationAwareInterface) {
+                    $handler->setConfiguration($this->config);
                 }
+                $this->block_handlers[$tag] = $handler;
             }
         }
+        // @phpstan-ignore-next-line it's definitely set to an object now
         return $this->block_handlers[$tag];
     }
 
     protected function inlineHandler(string $tag): TagHandler|null
     {
         if (!isset($this->inline_handlers[$tag])) {
+            /** @var TagHandler|class-string<TagHandler>|null $handler */
+            // @phpstan-ignore-next-line it's definitely an array
             $handler = $this->config->get('bracketeer')['inline_tags'][$tag];
-            if (!$handler) {
+            if (is_null($handler)) {
                 $this->inline_handlers[$tag] = null;
             } else {
                 if (is_string($handler)) {
                     $handler = new $handler;
                 }
-                $this->inline_handlers[$tag] = $handler;
-                if ($this->inline_handlers[$tag] instanceof ConfigurationAwareInterface) {
-                    $this->inline_handlers[$tag]->setConfiguration($this->config);
+                if ($handler instanceof ConfigurationAwareInterface) {
+                    $handler->setConfiguration($this->config);
                 }
+                $this->inline_handlers[$tag] = $handler;
             }
         }
+        // @phpstan-ignore-next-line it's definitely set to an object now
         return $this->inline_handlers[$tag];
     }
 }

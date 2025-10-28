@@ -54,6 +54,8 @@ class BlockBracketeerStartParser implements BlockStartParserInterface, Configura
         if (!$matched) return BlockStart::none();
         // ensure that there is a block tag handler for this tag name
         $parsed = Bracketeer::parseTag($line);
+        /** @var array<string,TagHandler|class-string<TagHandler>> $block_tags */
+        // @phpstan-ignore-next-line it's definitely an array
         $block_tags = $this->config->get('bracketeer')['block_tags'] ?? [];
         if (!array_key_exists($parsed['tag'], $block_tags)) return BlockStart::none();
         // advance to the end of the string, consuming the entire line

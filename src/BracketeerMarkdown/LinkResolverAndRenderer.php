@@ -48,6 +48,7 @@ class LinkResolverAndRenderer implements NodeRendererInterface, ConfigurationAwa
     public function render(Node $node, ChildNodeRendererInterface $childRenderer)
     {
         Link::assertInstanceOf($node);
+        // @phpstan-ignore-next-line it's definitely a LinkResolver
         $resolver = $this->config->get('bracketeer')['link_resolver'];
         assert($resolver instanceof LinkResolver);
         return $resolver->render(

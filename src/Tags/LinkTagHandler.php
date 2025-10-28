@@ -39,6 +39,9 @@ class LinkTagHandler implements TagHandler, ConfigurationAwareInterface
         $this->config = $configuration;
     }
 
+    /**
+     * @param array<string|int,string> $parts 
+     */
     public function render(string $tag, array $parts, bool $block): string|Stringable
     {
         $url = $parts[0];
@@ -50,6 +53,7 @@ class LinkTagHandler implements TagHandler, ConfigurationAwareInterface
             $new_window = false;
         }
         // build HTML
+        // @phpstan-ignore-next-line it's definitely a LinkResolver
         $resolver = $this->config->get('bracketeer')['link_resolver'];
         assert($resolver instanceof LinkResolver);
         return $resolver->render($url, null, $title, $new_window);
